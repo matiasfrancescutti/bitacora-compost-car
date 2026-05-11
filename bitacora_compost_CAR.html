@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAR · Bitácora de compost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta de colores inspirada en tierra, hojas secas y compost maduro. */
+  :root {
+    --bg: #F5F1E8;
+    --bg-alt: #EDE6D3;
+    --bg-card: #FBF7EE;
+    --primary: #2D5016;
+    --primary-dark: #1E3610;
+    --primary-light: #5C8B3A;
+    --accent: #C2541E;
+    --gold: #D4A53D;
+    --text: #2A1F14;
+    --text-soft: #6B5D4F;
+    --border: #D4C9B0;
+    --danger: #A03C2B;
+    --shadow: 0 4px 16px rgba(42, 31, 20, 0.08);
+    --shadow-lg: 0 8px 32px rgba(42, 31, 20, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(45, 80, 22, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 85% 80%, rgba(194, 84, 30, 0.04) 0%, transparent 50%);
+    padding: 24px 16px 60px;
+  }
+
+  .container { max-width: 920px; margin: 0 auto; }
+
+  /* Encabezado principal con identidad del CAR. */
+  header { text-align: center; padding: 32px 16px 40px; }
+
+  .kicker {
+    font-size: 0.78rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: var(--primary-dark);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  header h1 em { font-style: italic; color: var(--accent); font-weight: 500; }
+
+  .subtitle {
+    margin: 14px auto 0;
+    color: var(--text-soft);
+    font-size: 1.02rem;
+    max-width: 560px;
+  }
+
+  header::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+    margin: 28px auto 0;
+  }
+
+  /* Barra de pestañas para navegar entre las secciones de la app. */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-alt);
+    padding: 6px;
+    border-radius: 14px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn:hover { color: var(--primary); }
+  .tab-btn.active {
+    background: var(--bg-card);
+    color: var(--primary-dark);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tarjetas contenedoras de cada bloque de contenido. */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--primary-dark);
+    margin-bottom: 6px;
+  }
+
+  .card-desc { color: var(--text-soft); font-size: 0.95rem; margin-bottom: 22px; }
+
+  .field { margin-bottom: 18px; }
+
+  .field label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; }
+
+  .field input[type="date"],
+  .field input[type="text"],
+  .field textarea {
+    width: 100%;
+    padding: 11px 14px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  /* Filas para cargar cada ingrediente con cantidad y unidad. */
+  .ingredient-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 130px;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  .ing-label { font-weight: 500; font-size: 0.95rem; }
+
+  .ing-label small {
+    display: block;
+    color: var(--text-soft);
+    font-size: 0.78rem;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .ingredient-row input,
+  .ingredient-row select {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    font-family: inherit;
+    font-size: 0.92rem;
+  }
+
+  .ingredient-row input[type="number"] { text-align: center; }
+
+  @media (max-width: 580px) {
+    .ingredient-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  /* Visor grande del valor de C/N teórica calculado en vivo. */
+  .cn-display {
+    margin-top: 24px;
+    padding: 22px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cn-display::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+    opacity: 0.15;
+  }
+
+  .cn-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .cn-value {
+    font-family: 'Fraunces', serif;
+    font-size: 3.8rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cn-value small {
+    font-size: 1rem;
+    opacity: 0.7;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .cn-verdict {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cn-bar {
+    margin-top: 16px;
+    height: 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .cn-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+
+  .cn-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  /* Botones primarios y variantes secundarias. */
+  .btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn.btn-accent { background: var(--accent); }
+  .btn.btn-accent:hover { background: #A0451A; }
+
+  .btn.btn-ghost {
+    background: transparent;
+    color: var(--primary);
+    border: 1.5px solid var(--border);
+  }
+  .btn.btn-ghost:hover { background: var(--bg-alt); }
+
+  /* Lista de cargas guardadas en el historial. */
+  .batch-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .batch-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: transform 0.15s;
+  }
+
+  .batch-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+  .batch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .batch-date {
+    font-family: 'Fraunces', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+
+  .batch-id { font-size: 0.78rem; color: var(--text-soft); }
+
+  .batch-cn {
+    background: var(--bg-alt);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+
+  .batch-ingredients {
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+    line-height: 1.7;
+  }
+
+  .chip {
+    display: inline-block;
+    background: var(--bg);
+    padding: 2px 10px;
+    border-radius: 100px;
+    margin: 0 4px 4px 0;
+    border: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+
+  .batch-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .badge.pending { background: #FFF4E0; color: #8A5A00; }
+  .badge.ready   { background: #E8F4E0; color: var(--primary-dark); }
+  .badge.rated   { background: #F5E8D9; color: var(--accent); }
+
+  /* Ventana modal para puntuar lotes ya maduros. */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(42, 31, 20, 0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-backdrop.active { display: flex; }
+
+  .modal {
+    background: var(--bg-card);
+    border-radius: 18px;
+    max-width: 480px;
+    width: 100%;
+    padding: 30px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+  }
+
+  .rating-input {
+    display: flex;
+    gap: 6px;
+    margin: 16px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .rating-input button {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .rating-input button:hover { border-color: var(--primary); }
+
+  .rating-input button.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* Métricas y gráfico de la pestaña de aprendizaje. */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    line-height: 1;
+  }
+
+  .stat-label { font-size: 0.82rem; color: var(--text-soft); margin-top: 6px; }
+
+  .insight-chart {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .chart-title {
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 14px;
+    font-size: 0.95rem;
+  }
+
+  .chart-area {
+    position: relative;
+    height: 220px;
+    margin: 20px 10px 30px;
+    border-left: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .chart-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-card);
+    transform: translate(-50%, 50%);
+    box-shadow: 0 2px 6px rgba(194, 84, 30, 0.3);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .chart-dot:hover { transform: translate(-50%, 50%) scale(1.4); }
+
+  .chart-ideal-band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(92, 139, 58, 0.12);
+    border-left: 1px dashed var(--primary-light);
+    border-right: 1px dashed var(--primary-light);
+  }
+
+  .chart-axis-label { font-size: 0.75rem; color: var(--text-soft); position: absolute; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-soft); }
+  .empty-state .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+  /* Caja amarilla con información química didáctica. */
+  .info-box {
+    background: linear-gradient(135deg, rgba(212, 165, 61, 0.12), rgba(194, 84, 30, 0.08));
+    border-left: 3px solid var(--gold);
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
+  }
+
+  .info-box strong { color: var(--primary-dark); }
+
+  /* Sección desplegable de configuración avanzada al pie del formulario. */
+  details.config {
+    margin-top: 28px;
+    border-top: 1px dashed var(--border);
+    padding-top: 20px;
+  }
+
+  details.config summary {
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    font-weight: 500;
+    list-style: none;
+  }
+
+  details.config summary::before { content: "⚙ "; margin-right: 4px; }
+  details.config[open] summary { color: var(--primary); }
+
+  details.config .config-body {
+    margin-top: 12px;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: 0.88rem;
+  }
+
+  /* Toast emergente con mensajes breves de confirmación. */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--primary-dark);
+    color: white;
+    padding: 14px 22px;
+    border-radius: 100px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    color: var(--text-soft);
+    font-size: 0.82rem;
+  }
+
+  footer em { font-family: 'Fraunces', serif; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="kicker">Centro Agroecológico Rosario</div>
+    <h1>Bitácora de <em>compost</em></h1>
+    <p class="subtitle">Registrá cada mezcla, esperá unas semanas, calificá el resultado. La planilla aprende con vos cuál es la mejor combinación.</p>
+  </header>
+
+  <!-- Botones de las tres pestañas principales de la aplicación. -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="nueva">Nueva carga</button>
+    <button class="tab-btn" data-tab="historial">Mis cargas</button>
+    <button class="tab-btn" data-tab="aprendizaje">Aprendizaje</button>
+  </div>
+
+  <!-- ═══════════ Pestaña 1: cargar una nueva mezcla ═══════════ -->
+  <div class="tab-panel active" id="tab-nueva">
+    <div class="card">
+      <h2>Cargá una nueva mezcla</h2>
+      <p class="card-desc">Indicá cuánto pusiste de cada cosa. La unidad se elige al lado.</p>
+
+      <div class="field">
+        <label for="fecha">Fecha de armado</label>
+        <input type="date" id="fecha">
+      </div>
+
+      <!-- Acá se inyectan dinámicamente las filas de cada ingrediente. -->
+      <div id="ingredients-container"></div>
+
+      <div class="field" style="margin-top: 18px;">
+        <label for="notas">Observaciones (opcional)</label>
+        <textarea id="notas" rows="2" placeholder="Ej: rumen muy fresco, lluvia previa, etc."></textarea>
+      </div>
+
+      <!-- Tarjeta verde con el valor de C/N teórica que se calcula en vivo. -->
+      <div class="cn-display">
+        <div class="cn-label">Relación C/N teórica</div>
+        <div class="cn-value"><span id="cn-value">–</span><small id="cn-unit">esperando ingredientes</small></div>
+        <div class="cn-verdict" id="cn-verdict">Cargá ingredientes para ver el cálculo.</div>
+        <div class="cn-bar"><div class="cn-bar-fill" id="cn-bar-fill" style="width: 0%"></div></div>
+        <div class="cn-scale"><span>5</span><span>15</span><span>25</span><span>40</span><span>80+</span></div>
+      </div>
+
+      <div class="info-box" style="margin-top: 20px;">
+        <strong>¿Qué es la relación C/N?</strong> Es la proporción entre carbono y nitrógeno de la mezcla. El rango ideal para compostar está <strong>entre 25 y 30</strong>. Si hay mucho nitrógeno (menos de 20) la pila huele a amoníaco. Si hay mucho carbono (más de 40) el compost tarda meses extras en madurar.
+      </div>
+
+      <button class="btn" id="btn-guardar">💾 Guardar carga</button>
+
+      <details class="config">
+        <summary>Configuración avanzada (Google Sheets, datos)</summary>
+        <div class="config-body">
+          <div class="field" style="margin-bottom: 12px;">
+            <label for="webhook-url">URL del Web App de Google Apps Script</label>
+            <input type="text" id="webhook-url" placeholder="https://script.google.com/macros/s/.../exec">
+          </div>
+          <button class="btn btn-ghost" id="btn-save-webhook">Guardar URL</button>
+          <button class="btn btn-ghost" id="btn-export" style="margin-left: 8px;">📥 Exportar datos (.json)</button>
+          <button class="btn btn-ghost" id="btn-reset" style="margin-left: 8px; color: var(--danger);">Borrar todo</button>
+          <p style="margin-top: 12px; color: var(--text-soft); font-size: 0.82rem;">Mientras no configures el Web App, los datos quedan guardados localmente en este navegador.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ═══════════ Pestaña 2: historial de cargas registradas ═══════════ -->
+  <div class="tab-panel" id="tab-historial">
+    <div class="card">
+      <h2>Cargas registradas</h2>
+      <p class="card-desc">Las cargas con más de 8 semanas ya se pueden calificar.</p>
+      <div id="batch-list" class="batch-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ Pestaña 3: estadísticas y aprendizaje ═══════════ -->
+  <div class="tab-panel" id="tab-aprendizaje">
+    <div class="card">
+      <h2>¿Qué aprendimos?</h2>
+      <p class="card-desc">A medida que se acumulan cargas calificadas, aparece el patrón.</p>
+
+      <div class="stats-grid" id="stats-grid"></div>
+      <div id="best-recipes"></div>
+      <div class="insight-chart" id="chart-area-container"></div>
+
+      <div class="info-box" style="margin-top: 20px;">
+        <strong>Bibliografía de referencia:</strong> el rango óptimo de C/N inicial para compost aeróbico está bien establecido en 25–30 (Rynk et al., 1992; Bernal et al., 2009). Por debajo de 20, hay pérdidas de nitrógeno por volatilización; por encima de 40, la biodegradación se vuelve lenta.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ventana modal que aparece al puntuar una carga madurada. -->
+<div class="modal-backdrop" id="modal-rate">
+  <div class="modal">
+    <h3>Calificar esta carga</h3>
+    <p style="color: var(--text-soft); font-size: 0.92rem; margin-bottom: 8px;">¿Qué tan bien resultó este compost? (1 = muy malo, 10 = excelente)</p>
+    <div class="rating-input" id="rating-buttons"></div>
+    <div class="field">
+      <label for="rating-comment">Comentarios sobre el resultado</label>
+      <textarea id="rating-comment" rows="3" placeholder="Color, olor, textura, plantas que crecieron..."></textarea>
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px;">
+      <button class="btn btn-ghost" id="btn-cancel-rate">Cancelar</button>
+      <button class="btn" id="btn-confirm-rate">Guardar calificación</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <em>Bitácora del Centro Agroecológico Rosario</em> · proyecto de extensión · Lic. en Química · UNR
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   BASE DE DATOS DE INGREDIENTES
+   Valores promedio de C, N, densidad y materia seca tomados de
+   bibliografía estándar (Rynk 1992; Bernal 2009; CTC 2001).
+   Estos valores se actualizan acá si más adelante se hacen mediciones
+   propias del CAR.
+═══════════════════════════════════════════════════════════════════ */
+
+// Cada ingrediente trae sus parámetros químicos y físicos promedio.
+const INGREDIENTES = {
+  rumen:         { nombre: "Rumen vacuno",   ayuda: "Contenido ruminal fresco",     c: 40,  n: 1.80, densidad: 0.85, ms: 0.15 },
+  hojas_secas:   { nombre: "Hojas secas",     ayuda: "Hojarasca de otoño, marrones", c: 45,  n: 0.75, densidad: 0.10, ms: 0.85 },
+  hojas_humedas: { nombre: "Hojas húmedas",   ayuda: "Hojas verdes, frescas",        c: 42,  n: 2.50, densidad: 0.30, ms: 0.30 },
+  ramas_secas:   { nombre: "Ramas secas",     ayuda: "Poda seca, leñosa",            c: 48,  n: 0.24, densidad: 0.15, ms: 0.80 },
+  ramas_humedas: { nombre: "Ramas húmedas",   ayuda: "Poda verde, recién cortada",   c: 45,  n: 0.90, densidad: 0.40, ms: 0.45 },
+  tierra:        { nombre: "Tierra",          ayuda: "Aporta microorganismos",       c: 2.0, n: 0.18, densidad: 1.30, ms: 0.90 },
+  otros:         { nombre: "Otros",           ayuda: "Café, restos de cocina, etc.", c: 40,  n: 1.50, densidad: 0.30, ms: 0.40 }
+};
+
+// Volúmenes aproximados en litros de cada tipo de recipiente.
+const UNIDADES = {
+  balde:      { nombre: "balde (20 L)",      litros: 20 },
+  carretilla: { nombre: "carretilla (80 L)", litros: 80 },
+  bolsa:      { nombre: "bolsa (30 L)",      litros: 30 }
+};
+
+// Días que deben pasar antes de poder calificar una carga.
+const DIAS_PARA_CALIFICAR = 56;
+
+/* ═══════════════════════════════════════════════════════════════════
+   CÁLCULO DE LA RELACIÓN C/N TEÓRICA DE UNA MEZCLA
+═══════════════════════════════════════════════════════════════════ */
+
+// Convierte las cantidades cargadas a masa seca y devuelve la C/N global.
+function calcularCN(cargas) {
+  let totalC = 0, totalN = 0;
+  for (const [ing, datos] of Object.entries(cargas)) {
+    const cantidad = parseFloat(datos.cantidad) || 0;
+    if (cantidad <= 0) continue;
+    const info = INGREDIENTES[ing];
+    const litros = UNIDADES[datos.unidad].litros * cantidad;
+    // Pasa de volumen fresco a masa seca usando densidad y materia seca.
+    const masaSeca = litros * info.densidad * info.ms;
+    totalC += masaSeca * (info.c / 100);
+    totalN += masaSeca * (info.n / 100);
+  }
+  if (totalN === 0 || totalC === 0) return null;
+  return { cn: totalC / totalN, totalC, totalN };
+}
+
+// Devuelve un diagnóstico cualitativo en lenguaje llano según el C/N obtenido.
+function clasificarCN(cn) {
+  if (cn === null) return { emoji: "⏳", texto: "Cargá algún ingrediente." };
+  if (cn < 15)     return { emoji: "⚠️", texto: "Demasiado nitrógeno. Va a oler a amoníaco. Agregá ramas u hojas secas." };
+  if (cn < 20)     return { emoji: "🔶", texto: "Algo bajo en carbono. Podés sumar un poco de material seco." };
+  if (cn <= 30)    return { emoji: "✅", texto: "Excelente: dentro del rango óptimo para compostar (25–30)." };
+  if (cn <= 40)    return { emoji: "🔶", texto: "Algo alto en carbono. El proceso va a ser un poco lento." };
+  return { emoji: "⚠️", texto: "Demasiado carbono. Va a tardar meses extras. Sumá rumen u hojas húmedas." };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PERSISTENCIA: localStorage + envío opcional a Google Sheets
+═══════════════════════════════════════════════════════════════════ */
+
+// Lee del navegador la lista de lotes ya guardados.
+function cargarLotes() {
+  try { return JSON.parse(localStorage.getItem("car_lotes") || "[]"); }
+  catch { return []; }
+}
+
+// Guarda la lista completa de lotes en el almacenamiento del navegador.
+function guardarLotes(lotes) {
+  localStorage.setItem("car_lotes", JSON.stringify(lotes));
+}
+
+// Envía el lote al Web App de Google Apps Script si hay URL configurada.
+async function enviarASheets(lote, accion) {
+  const url = localStorage.getItem("car_webhook_url");
+  if (!url) return { ok: false, motivo: "sin URL configurada" };
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ accion, lote })
+    });
+    return { ok: resp.ok };
+  } catch (e) {
+    return { ok: false, motivo: e.message };
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ARMADO DEL FORMULARIO DE NUEVA CARGA
+═══════════════════════════════════════════════════════════════════ */
+
+// Genera una fila editable por cada ingrediente definido en la base.
+function renderIngredientes() {
+  const cont = document.getElementById("ingredients-container");
+  cont.innerHTML = "";
+  for (const [key, info] of Object.entries(INGREDIENTES)) {
+    const row = document.createElement("div");
+    row.className = "ingredient-row";
+    row.innerHTML = `
+      <div class="ing-label">
+        ${info.nombre}
+        <small>${info.ayuda} · C/N ≈ ${(info.c / info.n).toFixed(0)}</small>
+      </div>
+      <input type="number" min="0" step="0.5" value="0" data-ing="${key}" data-field="cantidad">
+      <select data-ing="${key}" data-field="unidad">
+        ${Object.entries(UNIDADES).map(([k, u]) => `<option value="${k}">${u.nombre}</option>`).join("")}
+      </select>
+    `;
+    cont.appendChild(row);
+  }
+  // Escucha cambios en cualquier input para recalcular el C/N en tiempo real.
+  cont.addEventListener("input", actualizarCN);
+  cont.addEventListener("change", actualizarCN);
+}
+
+// Recoge los valores actuales del formulario en un objeto estructurado.
+function leerCargas() {
+  const cargas = {};
+  document.querySelectorAll("[data-ing]").forEach(el => {
+    const ing = el.dataset.ing;
+    const field = el.dataset.field;
+    if (!cargas[ing]) cargas[ing] = { cantidad: 0, unidad: "balde" };
+    cargas[ing][field] = el.value;
+  });
+  return cargas;
+}
+
+// Refresca el visor de C/N con los valores actuales del formulario.
+function actualizarCN() {
+  const cargas = leerCargas();
+  const resultado = calcularCN(cargas);
+  const cnDisplay = document.getElementById("cn-value");
+  const cnUnit = document.getElementById("cn-unit");
+  const cnVerdict = document.getElementById("cn-verdict");
+  const cnBar = document.getElementById("cn-bar-fill");
+
+  if (!resultado) {
+    cnDisplay.textContent = "–";
+    cnUnit.textContent = "esperando ingredientes";
+    cnVerdict.textContent = "Cargá ingredientes para ver el cálculo.";
+    cnBar.style.width = "0%";
+    return;
+  }
+
+  const { cn } = resultado;
+  const diag = clasificarCN(cn);
+  cnDisplay.textContent = cn.toFixed(1);
+  cnUnit.textContent = ":1";
+  cnVerdict.innerHTML = `${diag.emoji} <strong>${diag.texto}</strong>`;
+  // Mapea el valor de C/N a un porcentaje dentro de la escala visual.
+  const pct = Math.min(100, Math.max(0, ((cn - 5) / 75) * 100));
+  cnBar.style.width = pct + "%";
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GUARDAR UNA NUEVA CARGA
+═══════════════════════════════════════════════════════════════════ */
+
+// Toma los datos del formulario, los valida y los guarda como un lote nuevo.
+async function guardarCarga() {
+  const cargas = leerCargas();
+  const resultado = calcularCN(cargas);
+  if (!resultado) {
+    mostrarToast("Cargá al menos un ingrediente.");
+    return;
+  }
+  const lote = {
+    id: "L-" + Date.now().toString(36).toUpperCase(),
+    fecha: document.getElementById("fecha").value,
+    cargas: cargas,
+    cn_teorica: resultado.cn,
+    c_total_kg: resultado.totalC,
+    n_total_kg: resultado.totalN,
+    notas: document.getElementById("notas").value,
+    calificacion: null,
+    comentario_calificacion: null,
+    fecha_calificacion: null
+  };
+  const lotes = cargarLotes();
+  lotes.unshift(lote);
+  guardarLotes(lotes);
+  // Intenta replicar el registro en Google Sheets si el Web App está configurado.
+  const sync = await enviarASheets(lote, "nueva_carga");
+  mostrarToast(sync.ok ? "✓ Guardado y sincronizado a Sheets" : "✓ Guardado localmente");
+  limpiarFormulario();
+  renderListaLotes();
+  renderAprendizaje();
+}
+
+// Vuelve los campos del formulario al estado inicial.
+function limpiarFormulario() {
+  document.querySelectorAll('[data-field="cantidad"]').forEach(el => el.value = 0);
+  document.getElementById("notas").value = "";
+  document.getElementById("fecha").valueAsDate = new Date();
+  actualizarCN();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PESTAÑA DE HISTORIAL DE CARGAS
+═══════════════════════════════════════════════════════════════════ */
+
+// Calcula cuántos días pasaron desde la fecha de armado de un lote.
+function diasDesde(fechaStr) {
+  if (!fechaStr) return 0;
+  const ms = Date.now() - new Date(fechaStr).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
+// Dibuja la lista completa de cargas con su estado y opción de calificar.
+function renderListaLotes() {
+  const lotes = cargarLotes();
+  const cont = document.getElementById("batch-list");
+
+  if (lotes.length === 0) {
+    cont.innerHTML = `<div class="empty-state">
+      <span class="emoji">🌱</span>
+      Todavía no hay cargas registradas.<br>Andá a "Nueva carga" para empezar.
+    </div>`;
+    return;
+  }
+
+  cont.innerHTML = lotes.map(lote => {
+    const dias = diasDesde(lote.fecha);
+    const calificable = dias >= DIAS_PARA_CALIFICAR && lote.calificacion === null;
+    const calificado = lote.calificacion !== null;
+
+    // Genera los chips con los ingredientes que efectivamente se usaron en la carga.
+    const chips = Object.entries(lote.cargas)
+      .filter(([_, d]) => parseFloat(d.cantidad) > 0)
+      .map(([k, d]) => `<span class="chip">${INGREDIENTES[k].nombre}: ${d.cantidad} ${d.unidad}</span>`)
+      .join("");
+
+    // Elige el badge de estado en función de la edad del lote y si fue calificado.
+    let badge;
+    if (calificado)       badge = `<span class="badge rated">★ ${lote.calificacion}/10</span>`;
+    else if (calificable) badge = `<span class="badge ready">listo para calificar</span>`;
+    else                  badge = `<span class="badge pending">madurando · ${dias}/${DIAS_PARA_CALIFICAR} días</span>`;
+
+    return `
+      <div class="batch-card">
+        <div class="batch-header">
+          <div>
+            <div class="batch-date">${formatearFecha(lote.fecha)}</div>
+            <div class="batch-id">${lote.id}</div>
+          </div>
+          <span class="batch-cn">C/N ${lote.cn_teorica.toFixed(1)}</span>
+        </div>
+        <div class="batch-ingredients">${chips}</div>
+        ${lote.notas ? `<div style="font-size: 0.86rem; color: var(--text-soft); margin-bottom: 10px;"><em>"${lote.notas}"</em></div>` : ""}
+        <div class="batch-footer">
+          <span class="batch-status">${badge}</span>
+          ${calificable ? `<button class="btn btn-accent" onclick="abrirModal('${lote.id}')" style="padding: 8px 16px; font-size: 0.88rem;">Calificar ahora</button>` : ""}
+          ${calificado ? `<span style="color: var(--text-soft); font-size: 0.85rem;">${lote.comentario_calificacion || ""}</span>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Convierte una fecha ISO al formato legible "5 de mayo de 2026".
+function formatearFecha(iso) {
+  if (!iso) return "Sin fecha";
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const d = new Date(iso);
+  return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL DE CALIFICACIÓN
+═══════════════════════════════════════════════════════════════════ */
+
+let loteCalificandoId = null;
+let calificacionSeleccionada = null;
+
+// Abre el modal preparado para puntuar el lote indicado.
+function abrirModal(loteId) {
+  loteCalificandoId = loteId;
+  calificacionSeleccionada = null;
+  document.getElementById("rating-comment").value = "";
+  const cont = document.getElementById("rating-buttons");
+  // Crea los diez botones de calificación del 1 al 10.
+  cont.innerHTML = Array.from({ length: 10 }, (_, i) =>
+    `<button onclick="seleccionarCalificacion(${i + 1})">${i + 1}</button>`
+  ).join("");
+  document.getElementById("modal-rate").classList.add("active");
+}
+
+// Resalta los números seleccionados al estilo de una escala de estrellas.
+function seleccionarCalificacion(n) {
+  calificacionSeleccionada = n;
+  document.querySelectorAll("#rating-buttons button").forEach((b, i) => {
+    b.classList.toggle("selected", (i + 1) <= n);
+  });
+}
+
+// Cierra el modal descartando los cambios.
+function cerrarModal() {
+  document.getElementById("modal-rate").classList.remove("active");
+  loteCalificandoId = null;
+}
+
+// Guarda la calificación elegida en el lote correspondiente.
+async function confirmarCalificacion() {
+  if (calificacionSeleccionada === null) {
+    mostrarToast("Elegí una calificación de 1 a 10.");
+    return;
+  }
+  const lotes = cargarLotes();
+  const idx = lotes.findIndex(l => l.id === loteCalificandoId);
+  if (idx === -1) return;
+  lotes[idx].calificacion = calificacionSeleccionada;
+  lotes[idx].comentario_calificacion = document.getElementById("rating-comment").value;
+  lotes[idx].fecha_calificacion = new Date().toISOString().split("T")[0];
+  guardarLotes(lotes);
+  await enviarASheets(lotes[idx], "calificar");
+  mostrarToast("✓ Calificación guardada");
+  cerrarModal();
+  renderListaLotes();
+  renderAprendizaje();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PESTAÑA DE APRENDIZAJE
+═══════════════════════════════════════════════════════════════════ */
+
+// Calcula métricas agregadas y dibuja el gráfico de dispersión.
+function renderAprendizaje() {
+  const lotes = cargarLotes();
+  const calificados = lotes.filter(l => l.calificacion !== null);
+
+  // Calcula el promedio general de calificación y el mejor lote registrado.
+  const promedio = calificados.length > 0
+    ? (calificados.reduce((s, l) => s + l.calificacion, 0) / calificados.length).toFixed(1)
+    : "–";
+  const mejor = calificados.reduce((a, b) => (!a || b.calificacion > a.calificacion) ? b : a, null);
+
+  document.getElementById("stats-grid").innerHTML = `
+    <div class="stat-box"><div class="stat-value">${lotes.length}</div><div class="stat-label">Cargas totales</div></div>
+    <div class="stat-box"><div class="stat-value">${calificados.length}</div><div class="stat-label">Cargas calificadas</div></div>
+    <div class="stat-box"><div class="stat-value">${promedio}</div><div class="stat-label">Promedio general</div></div>
+    <div class="stat-box"><div class="stat-value">${mejor ? mejor.calificacion : "–"}</div><div class="stat-label">Mejor calificación</div></div>
+  `;
+
+  // Arma el ranking textual de las tres mejores recetas hasta el momento.
+  const top = [...calificados].sort((a, b) => b.calificacion - a.calificacion).slice(0, 3);
+  document.getElementById("best-recipes").innerHTML = top.length === 0
+    ? `<div class="empty-state" style="padding: 20px;"><span class="emoji">📊</span>Cuando haya cargas calificadas vas a ver acá las mejores recetas.</div>`
+    : `<h3 style="font-family: 'Fraunces', serif; color: var(--primary-dark); margin: 24px 0 12px; font-size: 1.15rem;">Mejores recetas hasta ahora</h3>` +
+      top.map((l, i) => {
+        const chips = Object.entries(l.cargas)
+          .filter(([_, d]) => parseFloat(d.cantidad) > 0)
+          .map(([k, d]) => `${INGREDIENTES[k].nombre} (${d.cantidad} ${d.unidad})`).join(" · ");
+        return `<div style="background: var(--bg); border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; border-left: 3px solid var(--gold);">
+          <strong>#${i+1} · ${l.calificacion}/10 · C/N ${l.cn_teorica.toFixed(1)}</strong><br>
+          <span style="font-size: 0.88rem; color: var(--text-soft);">${chips}</span>
+        </div>`;
+      }).join("");
+
+  renderGrafico(calificados);
+}
+
+// Pinta los puntos de C/N versus calificación con posicionamiento absoluto.
+function renderGrafico(datos) {
+  const cont = document.getElementById("chart-area-container");
+  if (datos.length === 0) {
+    cont.innerHTML = "";
+    return;
+  }
+  // Define los rangos de los ejes X (C/N de 5 a 60) e Y (calificación 0 a 10).
+  const xMin = 5, xMax = 60, yMin = 0, yMax = 10;
+  // Calcula dónde queda la franja ideal de C/N entre 25 y 30.
+  const bandLeft  = ((25 - xMin) / (xMax - xMin)) * 100;
+  const bandRight = ((30 - xMin) / (xMax - xMin)) * 100;
+
+  const dots = datos.map(l => {
+    const x = Math.min(100, Math.max(0, ((l.cn_teorica - xMin) / (xMax - xMin)) * 100));
+    const y = Math.min(100, Math.max(0, ((l.calificacion - yMin) / (yMax - yMin)) * 100));
+    return `<div class="chart-dot" style="left: ${x}%; bottom: ${y}%;" title="C/N ${l.cn_teorica.toFixed(1)} · ${l.calificacion}/10"></div>`;
+  }).join("");
+
+  cont.innerHTML = `
+    <div class="chart-title">Relación C/N teórica vs. calificación obtenida</div>
+    <div class="chart-area">
+      <div class="chart-ideal-band" style="left: ${bandLeft}%; width: ${bandRight - bandLeft}%;"></div>
+      ${dots}
+      <span class="chart-axis-label" style="left: 0; bottom: -22px;">C/N: 5</span>
+      <span class="chart-axis-label" style="right: 0; bottom: -22px;">60</span>
+      <span class="chart-axis-label" style="left: -32px; top: 0;">10</span>
+      <span class="chart-axis-label" style="left: -28px; bottom: 0;">0</span>
+    </div>
+    <p style="text-align: center; font-size: 0.82rem; color: var(--text-soft); margin-top: 8px;">Franja verde = rango ideal según bibliografía (25–30)</p>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UTILIDADES VARIAS
+═══════════════════════════════════════════════════════════════════ */
+
+// Muestra un mensaje breve en la parte inferior de la pantalla.
+function mostrarToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// Permite descargar todos los datos guardados como un archivo JSON.
+function exportarDatos() {
+  const datos = cargarLotes();
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `bitacora_compost_CAR_${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INICIALIZACIÓN AL CARGAR LA PÁGINA
+═══════════════════════════════════════════════════════════════════ */
+
+// Configura todos los eventos y estados iniciales cuando se abre la página.
+document.addEventListener("DOMContentLoaded", () => {
+  renderIngredientes();
+  document.getElementById("fecha").valueAsDate = new Date();
+
+  // Implementa el cambio entre pestañas con los botones del menú superior.
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      if (btn.dataset.tab === "historial") renderListaLotes();
+      if (btn.dataset.tab === "aprendizaje") renderAprendizaje();
+    });
+  });
+
+  // Asocia el botón verde al flujo completo de guardado de una carga.
+  document.getElementById("btn-guardar").addEventListener("click", guardarCarga);
+  document.getElementById("btn-cancel-rate").addEventListener("click", cerrarModal);
+  document.getElementById("btn-confirm-rate").addEventListener("click", confirmarCalificacion);
+
+  // Recupera la URL del Web App si ya fue configurada en una sesión anterior.
+  const urlGuardada = localStorage.getItem("car_webhook_url");
+  if (urlGuardada) document.getElementById("webhook-url").value = urlGuardada;
+
+  // Guarda la URL del Google Apps Script para enviar datos a la planilla.
+  document.getElementById("btn-save-webhook").addEventListener("click", () => {
+    const url = document.getElementById("webhook-url").value.trim();
+    if (url) localStorage.setItem("car_webhook_url", url);
+    else     localStorage.removeItem("car_webhook_url");
+    mostrarToast("✓ Configuración guardada");
+  });
+
+  document.getElementById("btn-export").addEventListener("click", exportarDatos);
+
+  // Permite borrar todos los datos locales tras pedir confirmación.
+  document.getElementById("btn-reset").addEventListener("click", () => {
+    if (confirm("¿Borrar todos los datos guardados localmente? Esto no toca la planilla de Google.")) {
+      localStorage.removeItem("car_lotes");
+      renderListaLotes();
+      renderAprendizaje();
+      mostrarToast("Datos locales borrados");
+    }
+  });
+
+  actualizarCN();
+});
+</script>
+
+</body>
+</html>
